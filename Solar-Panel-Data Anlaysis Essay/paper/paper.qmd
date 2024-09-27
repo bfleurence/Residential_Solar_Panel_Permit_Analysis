@@ -1,0 +1,181 @@
+---
+title: "How 2012 U.S. tariffs affected the Toronto Residential Solar Panel Industry"
+author: 
+  - "Benjamin Fleurence"
+thanks: "Code and data are available at:https://github.com/bfleurence/Residential_Solar_Panel_Permit_Analysis.git"
+date: September 26, 2024
+date-format: long
+abstract: "This paper analyzes the publicly available data set Building Permits-Solar Hot Water Heaters. It gives insight into the Toronto residential solar panel industry from 2008-2024. A drastic decrease in demand following 2012 tariff's on Chinese manufactured Solar Panels amdist the U.S and China economic trade war, shows the negative affects geo-political decisions can have on a seemingly un-related industry."
+format: pdf
+number-sections: true
+bibliography: references.bib
+output: pdf
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(opendatatoronto)
+library(dplyr)
+library(readr)     
+library(janitor)    
+library(lubridate) 
+library(ggplot2)
+library(knitr)
+library(gt)
+```
+
+
+# Introduction
+
+In the 1990s, the German government implemented a subsidy on solar panels, drastically increasing the demand for the product. Seeing an opportunity, China began mass-producing them and slowly became the world leader in solar panel manufacturing. By the late 2000s, a solar panel craze had begun, and an already thriving industry started booming. In 2009, Toronto Building began tracking residential solar panel water heater permits, allowing us insight into the Toronto residential Solar Panel industry.
+
+This paper analyzes the data on the number of solar panel water heater permits completed, both over time and by residential area. Our first result tracked permits over time and saw a heavy concentration in the early portion of our time series, with roughly 70% of our permits being completed before January 2012. Next, we compared the number of permits completed to the postal code, and once again, there was a significant concentration, this time of permits being completed in postal codes in Ward 14. Lastly, we compared postal codes to time and saw similar results.
+
+This apparent trend was not for no reason. Since China started manufacturing in the 1990s, it has developed a competitive advantage relative to the rest of the world. Its manufacturing had become so streamlined that it produced faster and cheaper than North American companies, who simply could not compete. So, the U.S. government stepped in (amidst a larger economic war with China) and imposed tariffs on Chinese-made solar panels. Tariffs can be implemented for many reasons: to boost defense, as a tactic in a trade war, or to protect domestic industries. The last two are especially pertinent to this situation, and as we go through the data, we will see these tariffs had a drastic negative effect on the residential solar panel market. 
+
+# Data {#sec-data}
+
+The data for this paper was sourced directly from the Toronto Open Data Portal 'opendatatoronto' [@rOpenDataToronto]. The data set, Building Permits - Solar Hot Water Heaters, details the application outcomes for small residential solar panel projects published by Toronto Buildings from 2009 until today. It contains 160 observations and tracks sixteen different variables: an ID code, application and completion date, description, permit number and type, postal code, revision, status, street name, number, and type, and work and structure type. However, for the scope of this paper, we have narrowed down those sixteen variables to four: application date, postal code, completed date, and status. 
+
+Our next step was to clean and analyze the data using the R programming Language [@citeR]. After downloading our raw data file, we used the 'tidyverse' package [@rTidyverse], eliminating the variables we did not want to use, converting the application_date and completed_date to date format, and removing observations with NA as the complete date. The visual analysis was done using the 'ggplot2' package [@rGgplot2] to create the figures for this paper. 
+
+## Measurement 
+
+This analysis aims to better understand the trends of the solar panel industry since the 2008 craze began and Toronto Building started tracking residential solar water heater permits. With this data, we are aiming to see if there has been a trend in these permits along time or by area. Specifically, we will track the number of solar panels as a completed application. To record dates, we are using the completed date, as opposed to the application date, since not all applications were completed, and postal codes are the Toronto zip codes in which the project was completed. 
+
+It's important to note that this dataset has some limitations. For instance, it only provides insights into the residential solar panel industry, excluding commercial buyers. Therefore, our results cannot be extrapolated to the entire industry. Additionally, there are numerous external factors that may have influenced our data, some of which we have considered in our analysis, while others remain unexplored. 
+
+# Following the Number of Residential Permits Completed Over Time
+
+We started our analysis by simply looking at a time-series of when these Solar Panel installments were completed. [@fig-figure1] shows the number of Solar Panel Water heaters installed within a six month interval, starting in July of 2009 up until July 2024. 
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-figure1
+#| fig-cap: "Number of permits granted in a 6-month period from 2009-2024"
+#| fig_caption: true
+#| echo: false
+
+# Load necessary packages
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Read data (ensure the file path is correct relative to the .qmd file)
+simulated_data <- read.csv("../data/raw_data/simulated.csv")
+
+# Convert completed_date to date format
+simulated_data <- simulated_data %>%
+  mutate(completed_date = lubridate::ymd(completed_date))  # Ensure completed_date is in Date format
+
+# Clean and transform the data
+data_by_date <- simulated_data %>%
+  mutate(year = lubridate::floor_date(completed_date, "6 months")) %>%  # Round completed_date to 6-month intervals
+  group_by(year) %>%
+  summarise(observations = n())  # Count the number of observations in each 6-month period
+
+# Create the bar graph
+ggplot(data_by_date, aes(x = year, y = observations)) +
+  geom_col(fill = "steelblue") +  # Use geom_col for a bar graph
+  labs(title = "Number of Observations Over Time (6-Month Intervals)", 
+       x = "Completed Date (6-Month Intervals)", 
+       y = "Number of Solar Panels Installed") +
+  theme_minimal() +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +  # Set x-axis to 6-month intervals
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+```
+
+As we can see, [@fig-figure1] shows a clear right skew, with the bulk of the observations falling before the July 2011-January 2012 interval. After that two-to-three year period (July 2009 - January 2012), where the minimum number of permits completed was 20, the next highest six-month interval was five permits completed, which only happened on three other occasions out of twenty-six possible intervals. This is interesting, as most would assume solar panel's popularity would have increased overtime as more and more people become environomentally concious and global warming continues to increase as a problem. But, not only does it not increase, there is a drastic drop in demand that is seemingly left un-explained by our data. With this finding, we pivoted to compare the number of completed permits to our next variable, postal codes. 
+
+# Measuring the Number of Solar Panel Permits Completed by Postal Code
+
+Subsequently, we wanted to continue analyzing the number of permits given out. However, this time, we decided to compare that to the postal code in which they were granted.
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-figure2
+#| fig-cap: "Number of permits granted in a 6 month period from 2009-2024 "
+#| echo: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Load and clean the data
+cleaned_data <- read.csv("../data/analysis_data/analysis_data.csv")
+
+# Next the goal is to identify potential area and solar panel installation correlation 
+# Count the number of observations for each postal code
+postal_counts <- cleaned_data %>%
+  group_by(postal) %>%           # Group by postal
+  summarise(observations = n())  # Count observations
+
+# Bar graph with postal on the x-axis and number of observations on the y-axis
+ggplot(postal_counts, aes(x = postal, y = observations)) +
+  geom_col(fill = "steelblue") +  # Use geom_col for a bar graph
+  labs(title = "Number of Solar Panels Installed by Postal Code", 
+       x = "Postal Code", 
+       y = "Number of Solar Panels Installed") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better visibility
+```
+
+  This time, [@fig-figure2] shows an apparent central concentration of where these permits were granted. With postal codes M4C, M4E, M4J, M4K, M4L, M4M all above ten observations, and all but two having at least fifteen permits completed. The contrast between these six postal codes and all of the others is stark, with no other postal code recording above 5 approved and completed permits. After further research, it seems all of these six postal codes are located within the 14th ward (informally known as the Beaches-East York ward [@TorontoWardProfiles2024]. The reason for this concentration is intriguing but left mostly ambiguous within the scope of this data set.  
+  
+# Comparing when and where Residential Solar Panel Permits were Granted.
+
+Our final graph [@fig-figure3] shows a scatter plot with our 6-month interval dates on the x-axis and postal codes on the y-axis.
+
+```{r}
+#| warning: false
+#| message: false
+#| label: fig-figure3
+#| fig-cap: "Number of permits granted in a 6 month period from 2009-2024 "
+#| echo: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+
+# Ensure completed_date is in Date format
+cleaned_data <- cleaned_data %>%
+  mutate(completed_date = lubridate::ymd(completed_date))  # Convert completed_date to Date format
+
+# Scatter plot with dates on the x-axis and postal on the y-axis
+ggplot(cleaned_data, aes(x = completed_date, y = postal)) +
+  geom_point(alpha = 0.7, color = "darkblue") +  # Add points with some transparency
+  labs(title = "Scatter Plot of Postal Codes over Time", 
+       x = "Completed Date", 
+       y = "Postal Code") +
+  theme_minimal() +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +  # Format x-axis with 6-month intervals
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),          # Rotate x-axis labels for readability
+        axis.text.y = element_text(size = 6)) +                     # Reduce y-axis label font size
+  scale_y_discrete(expand = c(0.01, 0.01))  # Add some space around y-axis labels
+```
+
+After reviewing the first two graphs, the result should come as no surprise; there is a heavy concentration of data points in the early periods (October 2009 - April 2011), and within the ward 14 postal codes listed in the previous section. The rest of this graph continues to tell the story of the last two, that after 2012, and outside of ward 14, these permits were granted sporadically and randomly with no apparent trend. 
+
+```{r}
+# Conclusion 
+
+After downloading, cleaning, and reviewing our data set, we had an apparent trend but no other information to decipher why. However, after some outside review, at least one answer to the puzzle becomes more evident. The solar panel industry was kickstarted into the massive market we see today in the 1990s when Germany initiated a subsidy program that heavily increased demand. China, who was ten years into their economic boom, stepped in to be the leading supplier. Once China entered the market, by the mid-2000s, solar panel costs worldwide had decreased by 80%, and world solar panel capacity (measured in Gigawatts) began rising exponentially [@Contrary2024]. So why did it stop? The problem was China was too good at manufacturing. They scaled their operations since the 1990s to the point that the U.S. and Canada could no longer compete at the rate and price China had achieved, so in 2012, they imposed tariffs on Chinese-manufactured solar panels. A tariff acts almost as a sales tax but on imported goods. Governments will implement tariffs to encourage domestic manufacturing rather than importation, or as part of trade war tactic. As a result, there was a relative increase in the price of solar panel installation in the U.S. and Canada compared to the rest of the world. However, according to our data, that tariff did not increase local solar panel manufacturing; it simply killed the demand. Everyone needs energy for their houses, and how one gets that energy is up to every individual. However, after the 2012 tariff, installing solar panels as a means of energy was no longer economically viable relative to non-renewable sources. A cynical mind may wonder if the U.S. never intended for North American solar energy to catch up but rather was acutely aware of the impact these policies would have and forced the public to revert to non-renewable energy resources. Nevertheless, whether intentional or not, the data clearly shows that demand never bounced back. 
+
+With an answer to why there is such a concentration in time for when these panel permits were distributed, why is there a postal concentration? While the true answer is outside the scope of this research, we can provide a few theories as to why this might be the case. Ward 14 is less dense than most other central Toronto wards, meaning fewer skyscraper office and apartment buildings and more residential neighborhoods, where you would begin installing solar hot water heaters. Furthermore, due to the short-lived nature of when the solar panel craze reaching North America around 2008 and the 2012 tariff that decreased demand, there is a chance the plan was to expand solar panel energy to the rest of the Toronto residential neighborhoods. But, the price increase made it too un-appealing for the average household and stunted that expansion. 
+
+Overall, a part of the shortcoming of this dataset is the amount of outside variables we cannot track, which is skewing our results here. However, the next steps for this research should be to concentrate on why this postal code relationship exists and extrapolate these theories to larger samples of solar energy purchases by non-residential customers. Other potential buyers, like corporations and businesses, are not constrained to the same set of factors households are, and therefore could behave differently. For example, a corporation could work around a higher price either through government environmental subsidies or by believing that the good PR they will receive for enacting green initiatives will offset the higher price. Either way, those are not factors that affect our data set, only containing residential buyers, and therefore, do not allow us to comment on the greater solar energy industry, simply this smaller sub-set. 
+
+This tariff implementation is an interesting case study, espcially amdist the 2024 U.S. election where one of former President Trump's main economic point is increasing tariffs on China. If were to follow the trends and analysis of our data, we could conclude that it would not be a good economic policy. However, as with every economic policy, they require broader context, in this specific instance, we can confidently conclude the 2012 U.S. tariffs did not positively affect the residential solar panel industry in Toronto. 
+
+\newpage
+
+
+# References
