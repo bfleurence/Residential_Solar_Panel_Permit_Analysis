@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repo provides students with a foundation for their own projects associated with *Telling Stories with Data*. You do not need every aspect for every paper and you should delete aspects that you do not need.
+This paper analyzes the publicly available data set Building Permits-Solar Hot Water Heaters. It gives insight into the Toronto residential solar panel industry from 2008-2024. A drastic decrease in demand following 2012 tariff’s on Chinese manufactured Solar Panels amdist the U.S and China economic trade war, shows the negative affects geo-political decisions can have on a seemingly un-related in- dustry.
 
 
 ## File Structure
@@ -19,4 +19,8 @@ The repo is structured as:
 
 ## Statement on LLM usage
 
-Aspects of the code were written with the help of the auto-complete tool, Codriver. The abstract and introduction were written with the help of ChatHorse and the entire chat history is available in inputs/llms/usage.txt.
+This project benefitted from the use of a language model (LLM), specifically OpenAI's GPT, to assist in generating code, simulating data, and troubleshooting issues. The LLM provided support for:
+
+Drafting code for data simulation and analysis
+Providing guidance on R syntax and library usage
+Offering suggestions for data visualization and organization
