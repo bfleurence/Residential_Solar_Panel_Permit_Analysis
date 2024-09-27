@@ -1,4 +1,4 @@
-# Starter folder
+# Solar Panel Permit Data Analysis
 
 ## Overview
 
